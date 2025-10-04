@@ -94,10 +94,23 @@ void cg::renderer::renderer::move_pitch(float delta)
 
 void cg::renderer::renderer::load_model()
 {
-	// TODO Lab: 1.03 Adjust `cg::renderer::rasterization_renderer` and `cg::renderer::renderer` classes to consume `cg::world::model`
+	model = std::make_shared<cg::world::model>();
+	model->load_obj(settings->model_path);
 }
 
 void cg::renderer::renderer::load_camera()
 {
-	// TODO Lab: 1.04 Setup an instance of camera `cg::world::camera` class in `cg::renderer::renderer` and `cg::renderer::rasterization_renderer` 
+	camera = std::make_shared<cg::world::camera>();
+	camera->set_height(static_cast<float>(settings->height));
+	camera->set_width(static_cast<float>(settings->width));
+	camera->set_position(float3{
+		settings->camera_position[0],
+		settings->camera_position[1],
+		settings->camera_position[2]
+	});
+	camera->set_phi(settings->camera_phi);
+	camera->set_theta(settings->camera_theta);
+	camera->set_angle_of_view(settings->camera_angle_of_view);
+	camera->set_z_near(settings->camera_z_near);
+	camera->set_z_far(settings->camera_z_far);
 }
