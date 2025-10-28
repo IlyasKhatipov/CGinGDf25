@@ -91,6 +91,21 @@ namespace cg::renderer
 		float3 color;
 	};
 
+	class Denoiser
+	{
+	public:
+		void apply_bilateral_filter(cg::resource<float3>& image, 
+								  size_t width, size_t height,
+								  float sigma_space = 1.5f, 
+								  float sigma_color = 0.1f, 
+								  int radius = 2);
+		
+		void set_denoise_strength(float strength) { denoise_strength = strength; }
+		
+	private:
+		float denoise_strength = 1.0f;
+	};
+
 	template<typename VB, typename RT>
 	class raytracer
 	{
@@ -108,6 +123,11 @@ namespace cg::renderer
 		std::vector<aabb<VB>> acceleration_structures;
 
 		void ray_generation(float3 position, float3 direction, float3 right, float3 up, size_t depth, size_t accumulation_num);
+		
+		Denoiser denoiser;
+		bool enable_denoising = true;
+		float denoise_strength = 0.5f;
+		
 		std::shared_ptr<cg::utils::blue_noise> blue_noise_texture;
 		payload trace_ray(const ray& ray, size_t depth, float max_t = 1000.f, float min_t = 0.001f) const;
 		payload intersection_shader(const triangle<VB>& triangle, const ray& ray) const;
@@ -130,6 +150,56 @@ namespace cg::renderer
 		size_t width = 1920;
 		size_t height = 1080;
 	};
+
+	inline void Denoiser::apply_bilateral_filter(cg::resource<float3>& image, 
+											   size_t width, size_t height,
+											   float sigma_space, 
+											   float sigma_color, 
+											   int radius)
+	{
+		auto temp = std::make_shared<cg::resource<float3>>(width, height);
+		
+		const float sigma_space2 = sigma_space * sigma_space;
+		const float sigma_color2 = sigma_color * sigma_color;
+		
+		#pragma omp parallel for
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				float3 sum = float3(0.f);
+				float total_weight = 0.f;
+				float3 center_color = image.item(x, y);
+				
+				for (int dx = -radius; dx <= radius; dx++) {
+					for (int dy = -radius; dy <= radius; dy++) {
+						int nx = x + dx, ny = y + dy;
+						if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+							float3 neighbor_color = image.item(nx, ny);
+							
+							float space_dist = dx*dx + dy*dy;
+							float space_weight = exp(-space_dist / (2 * sigma_space2));
+							
+							float color_dist = length(neighbor_color - center_color);
+							float color_weight = exp(-color_dist * color_dist / (2 * sigma_color2));
+							
+							float weight = space_weight * color_weight;
+							sum += neighbor_color * weight;
+							total_weight += weight;
+						}
+					}
+				}
+				
+				if (total_weight > 0.f) {
+					temp->item(x, y) = sum / total_weight;
+				} else {
+					temp->item(x, y) = center_color;
+				}
+			}
+		}
+		
+		for (size_t i = 0; i < image.count(); i++) {
+			image.item(i) = temp->item(i);
+		}
+	}
 
 	template<typename VB, typename RT>
 	inline void raytracer<VB, RT>::set_render_target(
@@ -220,15 +290,32 @@ namespace cg::renderer
 
         			auto& history_pixel = history->item(x, y);
         			history_pixel += sqrt(payload.color.to_float3() * frame_weight);
-
-        			if (frame_id + 1 == accumulation_num)
-        			{
-            			cg::color color_pixel = cg::color::from_float3(history_pixel);
-            			render_target->item(x, y) = RT::from_color(color_pixel);
-        			}
     			}
 			}
+		}
 
+		if (enable_denoising && accumulation_num > 1) {
+			std::cout << "Applying denoising..." << std::endl;
+			
+			float adaptive_strength = denoise_strength;
+			if (accumulation_num >= 32) {
+				adaptive_strength *= 0.3f;
+			} else if (accumulation_num <= 8) {
+				adaptive_strength *= 1.5f;
+			}
+			
+			denoiser.set_denoise_strength(adaptive_strength);
+			denoiser.apply_bilateral_filter(*history, width, height,
+										  2.0f * adaptive_strength, 
+										  0.2f * adaptive_strength, 
+										  3);
+		}
+
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				cg::color color_pixel = cg::color::from_float3(history->item(x, y));
+				render_target->item(x, y) = RT::from_color(color_pixel);
+			}
 		}
 	}
 

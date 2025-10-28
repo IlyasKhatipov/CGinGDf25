@@ -21,8 +21,11 @@ void cg::renderer::ray_tracing_renderer::init()
 	raytracer->set_vertex_buffers(model->get_vertex_buffers());
 	raytracer->set_index_buffers(model->get_index_buffers());
 	raytracer->blue_noise_texture = std::make_shared<cg::utils::blue_noise>(
-        "D:/projects/CGinGDf25/FreeBlueNoiseTextures/Data/16_16/HDR_LA_22.png"
+        "D:/projects/CGinGDf25/FreeBlueNoiseTextures/Data/1024_1024/LDR_RGBA_0.png"
     );
+
+	raytracer->enable_denoising = true;
+	raytracer->denoise_strength = 1.0f;
 
 	lights.push_back({
 		float3 {0.f, 1.58f, -0.03f},
