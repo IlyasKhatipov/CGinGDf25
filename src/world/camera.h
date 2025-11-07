@@ -7,6 +7,7 @@
 
 
 using namespace linalg::aliases;
+using namespace DirectX;
 
 namespace cg::world
 {

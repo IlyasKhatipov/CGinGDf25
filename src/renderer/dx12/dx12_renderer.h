@@ -18,6 +18,7 @@
 
 
 using namespace Microsoft::WRL;
+using namespace DirectX;
 
 namespace cg::renderer
 {
