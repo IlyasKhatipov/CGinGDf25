@@ -127,8 +127,8 @@ namespace cg::renderer
 		void create_constant_buffer_view(const ComPtr<ID3D12Resource>& buffer, D3D12_CPU_DESCRIPTOR_HANDLE cpu_handler);
 
 		void create_root_signature(const D3D12_STATIC_SAMPLER_DESC* sampler_descriptors, UINT num_sampler_descriptors);
-		static std::filesystem::path get_shader_path() ;
-		static ComPtr<ID3DBlob> compile_shader(const std::string& entrypoint, const std::string& target) ;
+		std::filesystem::path get_shader_path() ;
+		ComPtr<ID3DBlob> compile_shader(const std::string& entrypoint, const std::string& target) ;
 		void create_pso();
 
 		void create_command_allocators();
