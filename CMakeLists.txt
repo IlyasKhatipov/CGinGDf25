@@ -18,8 +18,7 @@ set(SOURCE
         src/renderer/renderer.cpp
         src/world/camera.cpp
         src/world/model.cpp
-        src/utils/resource_utils.cpp
-        src/utils/blue_noise.cpp)
+        src/utils/resource_utils.cpp)
 
 if(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -34,17 +33,8 @@ find_package(OpenMP REQUIRED)
 add_executable(Raytracing src/main.cpp src/renderer/raytracer/raytracer_renderer.cpp ${SOURCE})
 target_compile_definitions(Raytracing PUBLIC RAYTRACING)
 target_include_directories(Raytracing PRIVATE ${INCLUDE})
-
-if (OpenMP_FOUND)
-    target_compile_options(Raytracing PRIVATE ${OpenMP_CXX_FLAGS})
-    target_link_libraries(Raytracing PRIVATE ${OpenMP_CXX_FLAGS})
-else()
-    target_compile_options(Raytracing PRIVATE -fopenmp)
-    target_link_libraries(Raytracing PRIVATE -fopenmp)
-endif()
-
+target_link_libraries(Raytracing PRIVATE OpenMP::OpenMP_CXX)
 set_property(TARGET Raytracing PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-
 
 add_executable(DirectX12 WIN32 src/win_main.cpp src/renderer/dx12/dx12_renderer.cpp src/utils/window.cpp ${SOURCE})
 target_compile_definitions(DirectX12 PUBLIC DX12 WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS _UNICODE UNICODE)

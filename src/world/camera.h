@@ -3,11 +3,12 @@
 #include <linalg.h>
 #ifdef DX12
 #include <DirectXMath.h>
+using namespace DirectX;
 #endif
 
 
 using namespace linalg::aliases;
-using namespace DirectX;
+
 
 namespace cg::world
 {
