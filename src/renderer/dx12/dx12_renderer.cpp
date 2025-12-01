@@ -180,14 +180,6 @@ void cg::renderer::dx12_renderer::create_depth_buffer()
 	dsv_heap.create_heap(device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 2);
 	device->CreateDepthStencilView(depth_buffer.Get(), nullptr, dsv_heap.get_cpu_descriptor_handle(0));
 	device->CreateDepthStencilView(shadow_map.Get(), nullptr, dsv_heap.get_cpu_descriptor_handle(1));
-	
-
-	dsv_heap.create_heap(device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	device->CreateDepthStencilView(
-		depth_buffer.Get(),
-		nullptr,
-		dsv_heap.get_cpu_descriptor_handle()
-	);
 }
 
 void cg::renderer::dx12_renderer::create_command_allocators()
@@ -251,7 +243,7 @@ void cg::renderer::dx12_renderer::create_root_signature(const D3D12_STATIC_SAMPL
 	ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 	root_parameters[1].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
 
-	ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
+	ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
 	root_parameters[2].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
 
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE data{};
